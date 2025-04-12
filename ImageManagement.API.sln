@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35828.75
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManagement.API", "ImageManagement.API\ImageManagement.API.csproj", "{2445D200-308C-4448-A17E-6CF5596CCD68}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManagement.Infrastructure", "ImageManagement.DAL\ImageManagement.Infrastructure.csproj", "{460B38CF-B942-4C4F-A899-83D41C24E47F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManagement.Domain", "ImageManagement.Domain\ImageManagement.Domain.csproj", "{4044E139-3E7A-48CF-BE6C-30821D45F130}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManagement.Test", "ImageManagement.Test\ImageManagement.Test.csproj", "{F1360B5B-C0A9-486C-8D9E-7ED0E3FCC07D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManagement.Common", "ImageManagement.Common\ImageManagement.Common.csproj", "{661E46B4-E9EA-451A-9256-4D9EBB027763}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageManagement.BLL", "ImageManagement.BLL\ImageManagement.BLL.csproj", "{054CFBAE-2B34-535E-6C67-D8AC09B2982E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2445D200-308C-4448-A17E-6CF5596CCD68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2445D200-308C-4448-A17E-6CF5596CCD68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2445D200-308C-4448-A17E-6CF5596CCD68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2445D200-308C-4448-A17E-6CF5596CCD68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{460B38CF-B942-4C4F-A899-83D41C24E47F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{460B38CF-B942-4C4F-A899-83D41C24E47F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{460B38CF-B942-4C4F-A899-83D41C24E47F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{460B38CF-B942-4C4F-A899-83D41C24E47F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4044E139-3E7A-48CF-BE6C-30821D45F130}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4044E139-3E7A-48CF-BE6C-30821D45F130}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4044E139-3E7A-48CF-BE6C-30821D45F130}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4044E139-3E7A-48CF-BE6C-30821D45F130}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1360B5B-C0A9-486C-8D9E-7ED0E3FCC07D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1360B5B-C0A9-486C-8D9E-7ED0E3FCC07D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1360B5B-C0A9-486C-8D9E-7ED0E3FCC07D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1360B5B-C0A9-486C-8D9E-7ED0E3FCC07D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{661E46B4-E9EA-451A-9256-4D9EBB027763}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{661E46B4-E9EA-451A-9256-4D9EBB027763}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{661E46B4-E9EA-451A-9256-4D9EBB027763}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{661E46B4-E9EA-451A-9256-4D9EBB027763}.Release|Any CPU.Build.0 = Release|Any CPU
+		{054CFBAE-2B34-535E-6C67-D8AC09B2982E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{054CFBAE-2B34-535E-6C67-D8AC09B2982E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{054CFBAE-2B34-535E-6C67-D8AC09B2982E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{054CFBAE-2B34-535E-6C67-D8AC09B2982E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C195050A-A612-485F-BAF4-878CF5F42DD9}
+	EndGlobalSection
+EndGlobal
