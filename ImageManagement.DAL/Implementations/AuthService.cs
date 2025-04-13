@@ -21,7 +21,6 @@ public class AuthService : IAuthService
             {
                 Subject = new ClaimsIdentity(new[]
                      {
-                            new Claim("UserName",username )
                       }),
                 Expires = DateTime.UtcNow.AddMinutes(_jwt.ExpirationTime),
                 Issuer = config[_jwt.Issuer],
