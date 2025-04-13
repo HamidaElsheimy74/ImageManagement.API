@@ -40,7 +40,7 @@ public class ImageService : IImageService
 
             return new ResponseResult
             {
-                Data = new ExifData()
+                Data = exifData == null ? null : new ExifData()
                 {
                     Latitude = exifData.Latitude,
                     Longitude = exifData.Longitude,
@@ -120,7 +120,7 @@ public class ImageService : IImageService
 
                             var outputPath = Path.Combine(
                             Path.GetDirectoryName(originalPath)!,
-                                $"{target.Name}.{_config.GetSection("ConversionFormat")}");
+                                $"{target.Name}.{_config["ConversionFormat"]}");
 
                             await resizedImage.SaveAsync(outputPath, new WebpEncoder());
                         }

@@ -25,7 +25,7 @@ public class ImagesController : BaseAPIController
     /// </summary>
     /// <param name="files"></param>
     /// <returns></returns>
-    [HttpPost("upload")]
+    [HttpPost("Upload")]
     [Authorize]
     public async Task<IActionResult> UploadImages(List<IFormFile> files)
     {
@@ -47,7 +47,7 @@ public class ImagesController : BaseAPIController
     /// <param name="imageId"></param>
     /// <returns></returns>
 
-    [HttpGet("{imageId}")]
+    [HttpGet("ImageMetadata/{imageId}")]
     [Authorize]
     public async Task<IActionResult> GetImageInfo(string imageId)
     {
@@ -70,7 +70,7 @@ public class ImagesController : BaseAPIController
     /// <param name="imageId"></param>
     /// <param name="size"></param>
     /// <returns></returns>
-    [HttpGet("{imageId}/download/{size}")]
+    [HttpGet("{imageId}/Download/{size}")]
     [Authorize]
     public async Task<IActionResult> DownloadImage(string imageId, string size)
     {
@@ -93,7 +93,7 @@ public class ImagesController : BaseAPIController
                 var tuple = result.Data as (MemoryStream, string)?;
                 var imageStream = tuple!.Value.Item1;
                 var contentType = tuple!.Value.Item2;
-                return File(imageStream, contentType, $"{imageId}_{size} fileExtension ");
+                return File(imageStream, contentType, $"{imageId}_{size}");
 
             }
             else

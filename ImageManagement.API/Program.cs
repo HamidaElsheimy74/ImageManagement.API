@@ -1,10 +1,13 @@
+using ImageManagement.API.Helpers;
 using ImageManagement.BLL.Interfaces;
 using ImageManagement.BLL.Services;
 using ImageManagement.Infrastructure.Implementations;
 using ImageManagement.Infrastructure.Interfaces;
+using ImageManagement.Infrastructure.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,27 +17,60 @@ builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+var jwtConfig = builder.Configuration.GetSection("JWT").Get<JWT>();
+
+
+
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+        .AddJwtBearer(x =>
+        {
+            x.SaveToken = true;
+            x.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtConfig!.Issuer,
+                ValidAudience = jwtConfig.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Secret)),
+                RequireExpirationTime = true,
+            };
+        });
 builder.Services.AddSwaggerGen(s =>
 {
+    s.ResolveConflictingActions(apiDesc => apiDesc.First());
     s.SwaggerDoc("v1", new OpenApiInfo { Title = "Image Management API", Version = "v1" });
-    var securitySchema = new OpenApiSecurityScheme
+    var Scheme = new OpenApiSecurityScheme
     {
-        Description = "JWT authentication scheme",
-        Name = "Authorization",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        BearerFormat = "JWT",
+        Scheme = "Bearer",
         Reference = new OpenApiReference
         {
+            Id = "Bearer",
             Type = ReferenceType.SecurityScheme,
-            Id = "Bearer"
-        }
+        },
     };
-    s.AddSecurityDefinition("Bearer", securitySchema);
-    var securityRequirement = new OpenApiSecurityRequirement {
-                    {securitySchema, new[] { "Bearer"}}};
-    s.AddSecurityRequirement(securityRequirement);
+    s.AddSecurityDefinition(Scheme.Reference.Id, Scheme);
+    s.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+            { Scheme, Array.Empty<string>() },
+        });
+    s.OperationFilter<AddBearerPrefixFilter>();
+
+
 });
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
@@ -42,20 +78,6 @@ builder.Services.AddCors(options =>
         policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrigins("https://localhost:7012");
     });
 });
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-                    .AddJwtBearer(options =>
-                    {
-                        options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuerSigningKey = true,
-                            ValidateIssuer = true,
-                            ValidateAudience = false
-                        };
-                    });
 
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IImageService, ImageService>();
@@ -65,11 +87,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-app.UseSwagger();
-app.UseSwaggerUI();
-//}
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 
@@ -79,9 +101,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "Uploads");
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, builder.Configuration["UploadFolderName"]!);
 if (!Directory.Exists(uploadsPath))
 {
     Directory.CreateDirectory(uploadsPath);
 }
 app.Run();
+
+

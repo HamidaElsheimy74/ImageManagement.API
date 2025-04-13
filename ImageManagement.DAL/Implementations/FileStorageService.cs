@@ -2,6 +2,7 @@
 using ImageManagement.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace ImageManagement.Infrastructure.Implementations;
@@ -13,25 +14,70 @@ public class FileStorageService : IFileStorageService
     private readonly IConfiguration _config;
     private string uploadFolderName;
     private string exIFFileName;
-    public FileStorageService(IWebHostEnvironment env, IConfiguration config)
+    ILogger<FileStorageService> _logger;
+    public FileStorageService(IWebHostEnvironment env, IConfiguration config, ILogger<FileStorageService> logger)
     {
         _env = env;
         _config = config;
         uploadFolderName = _config["UploadFolderName"]!;
         exIFFileName = _config["ExifFileName"]!;
+        _logger = logger;
     }
     public async Task<string> StoreImageAsync(Stream imageStream, string imageId, string originalFileName)
     {
+        if (imageStream == null)
+            throw new ArgumentNullException(nameof(imageStream));
+
+        if (!imageStream.CanRead)
+            throw new ArgumentException("The provided stream is not readable", nameof(imageStream));
+
         var uploadsFolder = Path.Combine(_env.ContentRootPath, uploadFolderName, imageId);
-        Directory.CreateDirectory(uploadsFolder);
 
-        var originalPath = Path.Combine(uploadsFolder, $"original_{originalFileName}");
-        await using (var fileStream = new FileStream(originalPath, FileMode.Create))
+        try
         {
-            await imageStream.CopyToAsync(fileStream);
-        }
+            Directory.CreateDirectory(uploadsFolder);
 
-        return originalPath;
+            var originalPath = Path.Combine(uploadsFolder, $"original_{originalFileName}");
+
+            var tempPath = Path.GetTempFileName();
+            try
+            {
+                await using (var tempStream = new FileStream(
+                    tempPath,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    bufferSize: 4096,
+                    FileOptions.Asynchronous | FileOptions.SequentialScan))
+                {
+                    await imageStream.CopyToAsync(tempStream);
+                }
+
+                File.Move(tempPath, originalPath, overwrite: true);
+                return originalPath;
+            }
+            finally
+            {
+                if (File.Exists(tempPath))
+                    try { File.Delete(tempPath); }
+                    catch
+                    {
+                        _logger.LogError("Failed to delete temp file: " + tempPath);
+                    }
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new IOException($"Access denied to path: {uploadsFolder}", ex);
+        }
+        catch (PathTooLongException ex)
+        {
+            throw new IOException("Path too long", ex);
+        }
+        catch (IOException ex)
+        {
+            throw new IOException("Failed to store image", ex);
+        }
     }
 
     public async Task StoreExifDataAsync(string imageId, ExifData exifData)
@@ -39,9 +85,38 @@ public class FileStorageService : IFileStorageService
         var uploadsFolder = Path.Combine(_env.ContentRootPath, uploadFolderName, imageId);
         var exifPath = Path.Combine(uploadsFolder, exIFFileName);
 
-        await JsonSerializer.SerializeAsync(
-            new FileStream(exifPath, FileMode.Create),
-            exifData);
+        Directory.CreateDirectory(uploadsFolder);
+
+        var tempPath = Path.GetTempFileName();
+        try
+        {
+            await using (var tempStream = new FileStream(
+                tempPath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 4096,
+                FileOptions.Asynchronous | FileOptions.SequentialScan))
+            {
+                await JsonSerializer.SerializeAsync(tempStream, exifData);
+            }
+
+            File.Move(tempPath, exifPath, overwrite: true);
+        }
+        catch (Exception ex)
+        {
+            if (File.Exists(tempPath))
+            {
+                try { File.Delete(tempPath); }
+                catch
+                {
+                    _logger.LogError("Failed to delete temp file: " + tempPath);
+                }
+            }
+            _logger.LogError(ex, $"Failed to store EXIF data for image {imageId}");
+            throw new IOException($"Failed to store EXIF data for image {imageId}", ex);
+        }
+
     }
 
     public async Task<ExifData> GetExifDataAsync(string imageId)
@@ -51,27 +126,81 @@ public class FileStorageService : IFileStorageService
         if (!File.Exists(exifPath))
             return null!;
 
-        await using var fileStream = new FileStream(exifPath, FileMode.Open);
-        return await JsonSerializer.DeserializeAsync<ExifData>(fileStream);
+        try
+        {
+            await using var fileStream = new FileStream(
+                exifPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 4096,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+
+            // Deserialize with cancellation token and options
+            return await JsonSerializer.DeserializeAsync<ExifData>(
+                fileStream,
+                options: null!,
+                cancellationToken: default);
+        }
+        catch (JsonException jsonEx)
+        {
+            throw new InvalidDataException($"Invalid EXIF data format in file: {exifPath}", jsonEx);
+        }
+        catch (IOException ioEx)
+        {
+            throw new IOException($"Could not read EXIF data from file: {exifPath}", ioEx);
+        }
+        catch (UnauthorizedAccessException authEx)
+        {
+            throw new UnauthorizedAccessException($"Access denied to EXIF file: {exifPath}", authEx);
+        }
     }
 
     public async Task<bool> ImageExistsAsync(string imageId)
     {
-        var imageFolder = Path.Combine(_env.ContentRootPath, uploadFolderName, imageId);
-        return Directory.Exists(imageFolder);
+
+        try
+        {
+            var imageFolder = Path.Combine(_env.ContentRootPath, uploadFolderName, imageId);
+
+            return await Task.Run(() => Directory.Exists(imageFolder));
+        }
+        catch (Exception ex) when (ex is ArgumentException or
+                            PathTooLongException or
+                            UnauthorizedAccessException or
+                            IOException)
+        {
+            _logger.LogError(ex, $"Error checking image existence: {imageId}");
+            return false;
+        }
     }
 
-    public string GetImagePath(string imageId, string size = "original")
+    public string? GetImagePath(string imageId, string size = "original")
     {
-        var imageFolder = Path.Combine(_env.ContentRootPath, uploadFolderName, imageId);
-        if (size == "original")
-        {
-            var files = Directory.GetFiles(imageFolder, "original_*");
-            return files.Length > 0 ? files[0] : null!;
-        }
 
-        var sizePath = Path.Combine(imageFolder, $"{size}.webp");
-        return File.Exists(sizePath) ? sizePath : null!;
+        try
+        {
+            var imageFolder = Path.Combine(_env.ContentRootPath, uploadFolderName, imageId);
+
+            if (!Directory.Exists(imageFolder))
+                return null;
+
+            if (size == "original")
+            {
+                return Directory.EnumerateFiles(imageFolder, "original_*")
+                              .FirstOrDefault();
+            }
+
+            var sizePath = Path.Combine(imageFolder, $"{size}.webp");
+            return File.Exists(sizePath) ? sizePath : null;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or
+                                 IOException or
+                                 PathTooLongException)
+        {
+            _logger.LogError(ex, $"Error accessing image path: {imageId}, size: {size}");
+            return null;
+        }
 
     }
 

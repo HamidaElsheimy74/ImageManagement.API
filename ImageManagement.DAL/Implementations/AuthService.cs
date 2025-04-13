@@ -15,20 +15,24 @@ public class AuthService : IAuthService
         try
         {
             var _jwt = config.GetSection("JWT")?.Get<JWT>();
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwt!.Secret);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[]
-                     {
-                      }),
-                Expires = DateTime.UtcNow.AddMinutes(_jwt.ExpirationTime),
-                Issuer = config[_jwt.Issuer],
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+            var claims = new[]
+         {
+            new Claim("UserName", username),
+        };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt!.Secret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _jwt.Issuer,
+                audience: _jwt.Audience,
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(_jwt.ExpirationTime),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
 
         }
         catch (Exception ex)
