@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,39 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 var jwtConfig = builder.Configuration.GetSection("JWT").Get<JWT>();
 
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Request.Headers["X-Client-Id"].FirstOrDefault() ?? httpContext.Connection.RemoteIpAddress?.ToString(),
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+
+
+    options.AddPolicy("strict", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Connection.RemoteIpAddress?.ToString(),
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+
+
+    options.OnRejected = (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.WriteAsync("Too many requests. Please try again later.",
+            cancellationToken: cancellationToken);
+        return ValueTask.CompletedTask;
+    };
+});
 
 
 builder.Services.AddAuthorization();
@@ -98,7 +132,7 @@ app.UseHttpsRedirection();
 app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseRateLimiter();
 app.MapControllers();
 
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, builder.Configuration["UploadFolderName"]!);

@@ -3,6 +3,7 @@ using ImageManagement.Common.DTOs;
 using ImageManagement.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Net;
 
 namespace ImageManagement.API.Controllers;
@@ -27,6 +28,7 @@ public class ImagesController : BaseAPIController
     /// <returns></returns>
     [HttpPost("Upload")]
     [Authorize]
+    [DisableRateLimiting]
     public async Task<IActionResult> UploadImages(List<IFormFile> files)
     {
         if (files == null || files.Count == 0)
@@ -49,6 +51,7 @@ public class ImagesController : BaseAPIController
 
     [HttpGet("ImageMetadata/{imageId}")]
     [Authorize]
+    [EnableRateLimiting("strict")]
     public async Task<IActionResult> GetImageInfo(string imageId)
     {
         if (string.IsNullOrEmpty(imageId) || string.IsNullOrWhiteSpace(imageId))
@@ -72,6 +75,7 @@ public class ImagesController : BaseAPIController
     /// <returns></returns>
     [HttpGet("{imageId}/Download/{size}")]
     [Authorize]
+    [EnableRateLimiting("strict")]
     public async Task<IActionResult> DownloadImage(string imageId, string size)
     {
         try
@@ -102,7 +106,7 @@ public class ImagesController : BaseAPIController
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error downloading image {imageId}");
-            return StatusCode(500, new { Status = "Error", Message = ex.Message });
+            return StatusCode(500, new { Status = "Error", Message = ErrorsHandler.Internal_Server_Error });
         }
 
     }

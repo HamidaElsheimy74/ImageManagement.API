@@ -4,6 +4,7 @@ using ImageManagement.Common.DTOs;
 using ImageManagement.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ImageManagement.API.Controllers;
 
@@ -26,20 +27,14 @@ public class AccountController : BaseAPIController
     /// <returns></returns>
     [HttpPost("Login")]
     [AllowAnonymous]
+    [DisableRateLimiting]
     public async Task<IActionResult> Login([FromBody] LoginData model)
     {
         try
         {
-
-            if (model == null)
+            if (!ModelState.IsValid || model is null)
             {
                 return BadRequest(new ResponseResult(ErrorsHandler.Invalid_LoginModel, null!, 400));
-            }
-            if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrWhiteSpace(model.UserName)
-                || string.IsNullOrEmpty(model.Password) || string.IsNullOrWhiteSpace(model.Password))
-            {
-                return BadRequest(new ResponseResult($"{ErrorsHandler.Invalid_Username} or {ErrorsHandler.Invalid_Password}", null!, 400));
-
             }
 
             var result = await _loginService.LoginAsync(model.UserName, model.Password);
@@ -48,7 +43,7 @@ public class AccountController : BaseAPIController
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error while login");
-            return StatusCode(500, new { Message = ex.Message });
+            return StatusCode(500, new { Message = ErrorsHandler.Internal_Server_Error });
         }
     }
 
