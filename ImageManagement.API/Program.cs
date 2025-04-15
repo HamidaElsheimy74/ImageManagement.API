@@ -1,4 +1,6 @@
 using ImageManagement.API.Helpers;
+using ImageManagement.BLL.Helpers.Interfaces;
+using ImageManagement.BLL.Helpers.Services;
 using ImageManagement.BLL.Interfaces;
 using ImageManagement.BLL.Services;
 using ImageManagement.Infrastructure.Implementations;
@@ -117,6 +119,7 @@ builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IImageProcessingHelpers, ImageProcessingHelpers>();
 
 var app = builder.Build();
 

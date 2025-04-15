@@ -13,11 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-    <Folder Include="Uploads\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\ImageManagement.BLL\ImageManagement.BLL.csproj" />
   </ItemGroup>
 

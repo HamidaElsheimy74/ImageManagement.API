@@ -48,7 +48,7 @@ public class FileStorageServiceTests
     public async Task StoreImageAsync_ValidStream_CreatesFileInCorrectLocation()
     {
         // Arrange
-        var testStream = TestUtitities.CreateTestStream("test image content");
+        var testStream = TestUtilities.CreateTestStream("test image content");
         var imageId = "img123";
         var fileName = "test.png";
 
@@ -96,7 +96,7 @@ public class FileStorageServiceTests
     {
         // Arrange
         var longFileName = new string('a', 300) + ".png";
-        var testStream = TestUtitities.CreateTestStream("content");
+        var testStream = TestUtilities.CreateTestStream("content");
 
         //Act
         await _fileStorageService.StoreImageAsync(testStream, "img123", longFileName);
@@ -109,7 +109,7 @@ public class FileStorageServiceTests
     {
         // Arrange
         _mockEnv.Setup(e => e.ContentRootPath).Returns("C:\\Windows\\System32");
-        var testStream = TestUtitities.CreateTestStream("content");
+        var testStream = TestUtilities.CreateTestStream("content");
 
         // Act
         await _fileStorageService.StoreImageAsync(testStream, "img123", "test.png");
@@ -168,7 +168,7 @@ public class FileStorageServiceTests
         // Arrange
         var imageId = "img123";
         var expectedData = new ExifData { Longitude = "1", Latitude = "1", Make = "1", Model = "1" };
-        TestUtitities.CreateTestExifFile(imageId, expectedData, _testRootPath, _config.Object["UploadFolderName"], _config.Object["ExifFileName"]);
+        TestUtilities.CreateTestExifFile(imageId, expectedData, _testRootPath, _config.Object["UploadFolderName"], _config.Object["ExifFileName"]);
 
         // Act
         var result = await _fileStorageService.GetExifDataAsync(imageId);
@@ -207,7 +207,7 @@ public class FileStorageServiceTests
     {
         // Arrange
         var imageId = "locked";
-        TestUtitities.CreateTestExifFile(imageId, new ExifData(), _testRootPath, _config.Object["UploadFolderName"], _config.Object["ExifFileName"]);
+        TestUtilities.CreateTestExifFile(imageId, new ExifData(), _testRootPath, _config.Object["UploadFolderName"], _config.Object["ExifFileName"]);
 
         var filePath = Path.Combine(_testRootPath, _config.Object["UploadFolderName"], imageId, _config.Object["ExifFileName"]);
         using (var lockedStream = File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
@@ -265,7 +265,7 @@ public class FileStorageServiceTests
     {
         // Arrange
         var imageId = "img1";
-        TestUtitities.CreateTestImage(imageId, "original", _config.Object["UploadFolderName"], _testRootPath, "jpg");
+        TestUtilities.CreateTestImage(imageId, "original", _config.Object["UploadFolderName"], _testRootPath, "jpg");
 
         // Act
         var result = _fileStorageService.GetImagePath(imageId);
@@ -281,13 +281,13 @@ public class FileStorageServiceTests
     {
         // Arrange
         var imageId = "img2";
-        TestUtitities.CreateTestImage(imageId, "thumbnail", _config.Object["UploadFolderName"], _testRootPath);
+        TestUtilities.CreateTestImage(imageId, "phone", _config.Object["UploadFolderName"], _testRootPath);
 
         // Act
-        var result = _fileStorageService.GetImagePath(imageId, "thumbnail");
+        var result = _fileStorageService.GetImagePath(imageId, "phone");
 
         // Assert
-        var expectedPath = Path.Combine(_testRootPath, _config.Object["UploadFolderName"], imageId, "thumbnail.webp");
+        var expectedPath = Path.Combine(_testRootPath, _config.Object["UploadFolderName"], imageId, "phone.webp");
         Assert.AreEqual(expectedPath, result);
     }
 
@@ -306,7 +306,7 @@ public class FileStorageServiceTests
     {
         // Arrange
         var imageId = "img3";
-        TestUtitities.CreateTestImage(imageId, "original", _config.Object["UploadFolderName"], _testRootPath);
+        TestUtilities.CreateTestImage(imageId, "original", _config.Object["UploadFolderName"], _testRootPath);
 
         // Act
         var result = _fileStorageService.GetImagePath(imageId, "nonexistent_size");
@@ -375,8 +375,8 @@ public class FileStorageServiceTests
     {
         // Arrange
         var imageId = "different_ext";
-        TestUtitities.CreateTestImage(imageId, "original", _config.Object["UploadFolderName"], _testRootPath, "png");
-        TestUtitities.CreateTestImage(imageId, "thumbnail", _config.Object["UploadFolderName"], _testRootPath);
+        TestUtilities.CreateTestImage(imageId, "original", _config.Object["UploadFolderName"], _testRootPath, "png");
+        TestUtilities.CreateTestImage(imageId, "thumbnail", _config.Object["UploadFolderName"], _testRootPath);
 
         // Act
         var originalResult = _fileStorageService.GetImagePath(imageId);

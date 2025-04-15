@@ -31,17 +31,29 @@ public class ImagesController : BaseAPIController
     [DisableRateLimiting]
     public async Task<IActionResult> UploadImages(List<IFormFile> files)
     {
-        if (files == null || files.Count == 0)
+        try
         {
-            return BadRequest(new ResponseResult
+            if (files == null || files.Count == 0)
             {
-                StatusCode = (int)HttpStatusCode.BadRequest,
-                Message = ErrorsHandler.Empty_Files_List
+                return BadRequest(new ResponseResult
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message = ErrorsHandler.Empty_Files_List
+                });
+            }
+
+            var results = await _imageService.ProcessAndStoreImageAsync(files);
+            return Ok(results);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading images");
+            return StatusCode(200, new ResponseResult
+            {
+                StatusCode = (int)HttpStatusCode.InternalServerError,
+                Message = ErrorsHandler.Internal_Server_Error
             });
         }
-
-        var results = await _imageService.ProcessAndStoreImageAsync(files);
-        return Ok(results);
     }
     /// <summary>
     /// Get image info by imageId
@@ -54,17 +66,29 @@ public class ImagesController : BaseAPIController
     [EnableRateLimiting("strict")]
     public async Task<IActionResult> GetImageInfo(string imageId)
     {
-        if (string.IsNullOrEmpty(imageId) || string.IsNullOrWhiteSpace(imageId))
+        try
         {
-            return BadRequest(new ResponseResult
+            if (string.IsNullOrEmpty(imageId) || string.IsNullOrWhiteSpace(imageId))
             {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = ErrorsHandler.Empty_image_ID
+                return BadRequest(new ResponseResult
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = ErrorsHandler.Empty_image_ID
+                });
+            }
+            var result = await _imageService.GetImageInfoAsync(imageId);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting image info for {imageId}");
+            return StatusCode(200, new ResponseResult
+            {
+                StatusCode = (int)HttpStatusCode.InternalServerError,
+                Message = ErrorsHandler.Internal_Server_Error
             });
         }
-        var result = await _imageService.GetImageInfoAsync(imageId);
-
-        return Ok(result);
     }
 
     /// <summary>
@@ -106,7 +130,11 @@ public class ImagesController : BaseAPIController
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error downloading image {imageId}");
-            return StatusCode(500, new { Status = "Error", Message = ErrorsHandler.Internal_Server_Error });
+            return StatusCode(200, new ResponseResult
+            {
+                StatusCode = (int)HttpStatusCode.InternalServerError,
+                Message = ErrorsHandler.Internal_Server_Error
+            });
         }
 
     }
