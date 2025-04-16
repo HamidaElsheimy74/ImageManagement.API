@@ -28,17 +28,9 @@ The **ImageManagement API** is a robust solution for managing image uploads, pro
 5.  Restore dependencies.
 6.  Build the project.
 
-
-## APIs Description
-Endpoint	                Method	  Description
-/api/images      	        POST	    Upload new image
-/api/images/{id}	        GET	      Get processed image
-/api/images/{id}/info	    GET	      Get image metadata
-/auth/login	              POST	    Get JWT token
-
 ## Configuration
 1-Set launch profile to Development & use these credintial to login & get JWT token to be able to use the apis.
-{
+	{
 		"UserName": "dev-User@test.com",
 		"Password": "dev@Password123"
 	}
@@ -54,11 +46,10 @@ Endpoint	                Method	  Description
 
 ### API Endpoints
 - **POST /api/images/upload**: Upload images.
-- **GET /api/images/{imageId}/info**: Retrieve image metadata.
-- **GET /api/images/{imageId}/resized/{size}**: Retrieve resized images.
--**POST /auth/login** :    Get JWT token
-
-  
+- **GET api/Images/ImageMetadata/{imageId}**: Retrieve image metadata.
+- **GET /api/images/{imageId}/Download/{size}**: Retrieve resized images &   download it.
+-**POST api/Account/Login** :   login user to the system &  Get JWT token for him/her.
+    
 ## Testing
 Run the unit tests:
    
