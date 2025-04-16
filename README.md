@@ -30,14 +30,14 @@ The **ImageManagement API** is a robust solution for managing image uploads, pro
 
 ## Configuration
 1-Set launch profile to Development & use these credintial to login & get JWT token to be able to use the apis.
-	{
-		"UserName": "dev-User@test.com",
-		"Password": "dev@Password123"
-	}
+	- {
+		- "UserName": "dev-User@test.com",
+		- "Password": "dev@Password123"
+	- }
 - **Note 1**: each Env has a different Credintials that will be found inside each appSettings.ChosenEnv.json.
 - **Note 2**: Development JWT Secres  & user Credintials are stored at user secrets that you can find as following: 
-          *Windows: %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json.
-          *macOS/Linux: ~/.microsoft/usersecrets/<UserSecretsId>/secrets.json.
+          - *Windows: %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json.
+          - *macOS/Linux: ~/.microsoft/usersecrets/<UserSecretsId>/secrets.json.
  
 
 2-Press F5 to start debugging & run the code.
