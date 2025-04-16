@@ -30,7 +30,6 @@ The **ImageManagement API** is a robust solution for managing image uploads, pro
 
 
 ## APIs Description
-API Endpoints
 Endpoint	                Method	  Description
 /api/images      	        POST	    Upload new image
 /api/images/{id}	        GET	      Get processed image
