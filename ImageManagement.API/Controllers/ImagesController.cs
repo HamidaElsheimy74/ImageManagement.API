@@ -1,8 +1,10 @@
-﻿using ImageManagement.BLL.Interfaces;
+﻿using ImageManagement.API.DTOs;
+using ImageManagement.BLL.Interfaces;
 using ImageManagement.Common.DTOs;
 using ImageManagement.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Net;
 
 namespace ImageManagement.API.Controllers;
@@ -25,21 +27,43 @@ public class ImagesController : BaseAPIController
     /// </summary>
     /// <param name="files"></param>
     /// <returns></returns>
-    [HttpPost("upload")]
+    [HttpPost("Upload")]
     [Authorize]
-    public async Task<IActionResult> UploadImages(List<IFormFile> files)
+    [EnableRateLimiting("strict")]
+    public async Task<IActionResult> UploadImages([FromForm] UploadImagesRequest request)
     {
-        if (files == null || files.Count == 0)
+        try
         {
-            return BadRequest(new ResponseResult
+            if (!ModelState.IsValid || request is null)
             {
-                StatusCode = (int)HttpStatusCode.BadRequest,
-                Message = ErrorsHandler.Empty_Files_List
+
+                return BadRequest(new ResponseResult
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message = ErrorsHandler.Invalid_UploadModel
+                });
+            }
+            if (request.Files == null || request.Files.Count == 0)
+            {
+                return BadRequest(new ResponseResult
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message = ErrorsHandler.Empty_Files_List
+                });
+            }
+
+            var results = await _imageService.ProcessAndStoreImageAsync(request.Files);
+            return Ok(results);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading images");
+            return StatusCode(200, new ResponseResult
+            {
+                StatusCode = (int)HttpStatusCode.InternalServerError,
+                Message = ErrorsHandler.Internal_Server_Error
             });
         }
-
-        var results = await _imageService.ProcessAndStoreImageAsync(files);
-        return Ok(results);
     }
     /// <summary>
     /// Get image info by imageId
@@ -47,21 +71,34 @@ public class ImagesController : BaseAPIController
     /// <param name="imageId"></param>
     /// <returns></returns>
 
-    [HttpGet("{imageId}")]
+    [HttpGet("ImageMetadata/{imageId}")]
     [Authorize]
+    [EnableRateLimiting("strict")]
     public async Task<IActionResult> GetImageInfo(string imageId)
     {
-        if (string.IsNullOrEmpty(imageId) || string.IsNullOrWhiteSpace(imageId))
+        try
         {
-            return BadRequest(new ResponseResult
+            if (string.IsNullOrEmpty(imageId) || string.IsNullOrWhiteSpace(imageId))
             {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = ErrorsHandler.Empty_image_ID
+                return BadRequest(new ResponseResult
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = ErrorsHandler.Empty_image_ID
+                });
+            }
+            var result = await _imageService.GetImageInfoAsync(imageId);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting image info for {imageId}");
+            return StatusCode(200, new ResponseResult
+            {
+                StatusCode = (int)HttpStatusCode.InternalServerError,
+                Message = ErrorsHandler.Internal_Server_Error
             });
         }
-        var result = await _imageService.GetImageInfoAsync(imageId);
-
-        return Ok(result);
     }
 
     /// <summary>
@@ -70,8 +107,9 @@ public class ImagesController : BaseAPIController
     /// <param name="imageId"></param>
     /// <param name="size"></param>
     /// <returns></returns>
-    [HttpGet("{imageId}/download/{size}")]
+    [HttpGet("{imageId}/Download/{size}")]
     [Authorize]
+    [EnableRateLimiting("strict")]
     public async Task<IActionResult> DownloadImage(string imageId, string size)
     {
         try
@@ -93,7 +131,7 @@ public class ImagesController : BaseAPIController
                 var tuple = result.Data as (MemoryStream, string)?;
                 var imageStream = tuple!.Value.Item1;
                 var contentType = tuple!.Value.Item2;
-                return File(imageStream, contentType, $"{imageId}_{size} fileExtension ");
+                return File(imageStream, contentType, $"{imageId}_{size}");
 
             }
             else
@@ -102,7 +140,11 @@ public class ImagesController : BaseAPIController
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error downloading image {imageId}");
-            return StatusCode(500, new { Status = "Error", Message = ex.Message });
+            return StatusCode(200, new ResponseResult
+            {
+                StatusCode = (int)HttpStatusCode.InternalServerError,
+                Message = ErrorsHandler.Internal_Server_Error
+            });
         }
 
     }

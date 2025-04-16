@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>f86fc7ae-4472-4f8c-a2ba-f7949899bbd9</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,12 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\" />
-    <Folder Include="Models\" />
+    <ProjectReference Include="..\ImageManagement.BLL\ImageManagement.BLL.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ImageManagement.BLL\ImageManagement.BLL.csproj" />
+    <Folder Include="Uploads\" />
   </ItemGroup>
 
 </Project>
