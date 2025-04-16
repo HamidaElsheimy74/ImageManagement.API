@@ -34,8 +34,8 @@ The **ImageManagement API** is a robust solution for managing image uploads, pro
 		"UserName": "dev-User@test.com",
 		"Password": "dev@Password123"
 	}
--**Note 1**: each Env has a different Credintials that will be found inside each appSettings.ChosenEnv.json.
--**Note 2**: Development JWT Secres  & user Credintials are stored at user secrets that you can find as following: 
+- **Note 1**: each Env has a different Credintials that will be found inside each appSettings.ChosenEnv.json.
+- **Note 2**: Development JWT Secres  & user Credintials are stored at user secrets that you can find as following: 
           *Windows: %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json.
           *macOS/Linux: ~/.microsoft/usersecrets/<UserSecretsId>/secrets.json.
  
@@ -48,7 +48,7 @@ The **ImageManagement API** is a robust solution for managing image uploads, pro
 - **POST /api/images/upload**: Upload images.
 - **GET api/Images/ImageMetadata/{imageId}**: Retrieve image metadata.
 - **GET /api/images/{imageId}/Download/{size}**: Retrieve resized images &   download it.
--**POST api/Account/Login** :   login user to the system &  Get JWT token for him/her.
+- **POST api/Account/Login** :   login user to the system &  Get JWT token for him/her.
     
 ## Testing
 Run the unit tests:
