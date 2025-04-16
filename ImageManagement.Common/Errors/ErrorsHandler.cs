@@ -12,7 +12,7 @@ public static class ErrorsHandler
     public static string Not_Found = " resource not found.";
     public static string Invalid_File_Type = "Invalid file type. Only JPG, PNG, and WebP are allowed.";
     public static string File_Too_Large = "File too large. Maximum size is 2MB.";
-    public static string Invalid_Size = "Invalid size parameter. Must be 'phone', 'tablet', 'desktop', or 'original'";
+    public static string Invalid_Size = "Invalid size parameter. Must be 'phone', 'tablet' or 'desktop'";
     public static string Invalid_Credentials = "Invalid credentials";
     public static string Invalid_Username = "Invalid username";
     public static string Invalid_Password = "Invalid password";
