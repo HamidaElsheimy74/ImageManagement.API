@@ -1,4 +1,5 @@
-﻿using ImageManagement.BLL.Interfaces;
+﻿using ImageManagement.API.DTOs;
+using ImageManagement.BLL.Interfaces;
 using ImageManagement.Common.DTOs;
 using ImageManagement.Common.Errors;
 using ImageManagement.Domain.Entities;
@@ -18,6 +19,7 @@ public class ImagesControllerTests
 {
     private Mock<IImageService> _imageService = new();
     private Mock<ILogger<ImagesController>> _logger = new();
+    private UploadImagesRequest _uploadImagesRequest = new();
     private List<IFormFile> _testFiles;
     private ImagesController _controller;
     public ImagesControllerTests()
@@ -29,6 +31,8 @@ public class ImagesControllerTests
             TestUtilities.CreateTestFormImage("test1.jpg", "image/jpg"),
             TestUtilities.CreateTestFormImage("test2.png", "image/png")
         };
+
+        _uploadImagesRequest.Files = _testFiles;
     }
 
     #region UpladoadImages test
@@ -48,7 +52,7 @@ public class ImagesControllerTests
                         .ReturnsAsync(expectedResults);
 
         // Act
-        var result = await _controller.UploadImages(_testFiles);
+        var result = await _controller.UploadImages(_uploadImagesRequest);
 
         // Assert
         Assert.IsInstanceOfType(result, typeof(OkObjectResult));
@@ -61,7 +65,7 @@ public class ImagesControllerTests
     public async Task UploadImages_WithEmptyFileList_ReturnsBadRequest()
     {
         // Act
-        var result = await _controller.UploadImages(new List<IFormFile>());
+        var result = await _controller.UploadImages(new UploadImagesRequest() { Files = new List<IFormFile>() });
 
         // Assert
         Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
@@ -81,13 +85,13 @@ public class ImagesControllerTests
         var result = await _controller.UploadImages(null);
 
         // Assert
-        Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
-        var badRequestResult = result as BadRequestObjectResult;
-        Assert.IsNotNull(badRequestResult);
+        Assert.IsInstanceOfType(result, typeof(ObjectResult));
+        var Result = result as ObjectResult;
+        Assert.IsNotNull(Result);
 
-        var response = badRequestResult.Value as ResponseResult;
+        var response = Result.Value as ResponseResult;
         Assert.AreEqual((int)HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.AreEqual(ErrorsHandler.Empty_Files_List, response.Message);
+        Assert.AreEqual(ErrorsHandler.Invalid_UploadModel, response.Message);
     }
 
     [TestMethod]
@@ -98,7 +102,7 @@ public class ImagesControllerTests
                         .ThrowsAsync(new Exception("Test exception"));
 
         // Act
-        var result = await _controller.UploadImages(_testFiles);
+        var result = await _controller.UploadImages(_uploadImagesRequest);
 
         // Assert
         Assert.IsInstanceOfType(result, typeof(ObjectResult));
@@ -126,7 +130,7 @@ public class ImagesControllerTests
                         .ReturnsAsync(expectedResults);
 
         // Act
-        var result = await _controller.UploadImages(_testFiles);
+        var result = await _controller.UploadImages(_uploadImagesRequest);
 
         // Assert
         Assert.IsInstanceOfType(result, typeof(OkObjectResult));
@@ -150,14 +154,17 @@ public class ImagesControllerTests
     }
 
     [TestMethod]
-    public async Task UploadImages_RateLimitingDisabled_Exists()
+    public async Task UploadImages_RateLimitingEnabled_Exists()
     {
         // Arrange
         var method = typeof(ImagesController).GetMethod("UploadImages");
-        var attributes = method.GetCustomAttributes(typeof(DisableRateLimitingAttribute), true);
+        var attributes = method.GetCustomAttributes(typeof(EnableRateLimitingAttribute), true);
 
         // Assert
-        Assert.IsTrue(attributes.Any(), "DisableRateLimiting attribute should be present");
+        Assert.IsTrue(attributes.Any(), "EnableRateLimiting attribute should be present");
+
+        var rateLimitAttribute = attributes.First() as EnableRateLimitingAttribute;
+        Assert.AreEqual("strict", rateLimitAttribute.PolicyName);
     }
 
     #endregion

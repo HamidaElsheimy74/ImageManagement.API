@@ -2,6 +2,7 @@ using ImageManagement.API.Helpers;
 using ImageManagement.BLL.Helpers.Interfaces;
 using ImageManagement.BLL.Helpers.Services;
 using ImageManagement.BLL.Interfaces;
+using ImageManagement.BLL.Models;
 using ImageManagement.BLL.Services;
 using ImageManagement.Infrastructure.Implementations;
 using ImageManagement.Infrastructure.Interfaces;
@@ -15,15 +16,23 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var services = builder.Services;
 
-builder.Services.AddControllers();
+services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
+services.AddEndpointsApiExplorer();
+
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();
+
 var jwtConfig = builder.Configuration.GetSection("JWT").Get<JWT>();
+services.Configure<LoginData>(builder.Configuration.GetSection("LoginData"));
 
 
-builder.Services.AddRateLimiter(options =>
+services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -57,8 +66,8 @@ builder.Services.AddRateLimiter(options =>
 });
 
 
-builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(x =>
+services.AddAuthorization();
+services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -78,7 +87,7 @@ builder.Services.AddAuthentication(x =>
                 RequireExpirationTime = true,
             };
         });
-builder.Services.AddSwaggerGen(s =>
+services.AddSwaggerGen(s =>
 {
     s.ResolveConflictingActions(apiDesc => apiDesc.First());
     s.SwaggerDoc("v1", new OpenApiInfo { Title = "Image Management API", Version = "v1" });
@@ -107,7 +116,7 @@ builder.Services.AddSwaggerGen(s =>
 });
 
 
-builder.Services.AddCors(options =>
+services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
@@ -115,20 +124,18 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddScoped<IFileStorageService, FileStorageService>();
-builder.Services.AddScoped<IImageService, ImageService>();
-builder.Services.AddScoped<ILoginService, LoginService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IImageProcessingHelpers, ImageProcessingHelpers>();
+services.AddScoped<IFileStorageService, FileStorageService>();
+services.AddScoped<IImageService, ImageService>();
+services.AddScoped<ILoginService, LoginService>();
+services.AddScoped<IAuthService, AuthService>();
+services.AddScoped<IImageProcessingHelpers, ImageProcessingHelpers>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 

@@ -1,4 +1,5 @@
-﻿using ImageManagement.BLL.Interfaces;
+﻿using ImageManagement.API.DTOs;
+using ImageManagement.BLL.Interfaces;
 using ImageManagement.Common.DTOs;
 using ImageManagement.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
@@ -28,12 +29,21 @@ public class ImagesController : BaseAPIController
     /// <returns></returns>
     [HttpPost("Upload")]
     [Authorize]
-    [DisableRateLimiting]
-    public async Task<IActionResult> UploadImages(List<IFormFile> files)
+    [EnableRateLimiting("strict")]
+    public async Task<IActionResult> UploadImages([FromForm] UploadImagesRequest request)
     {
         try
         {
-            if (files == null || files.Count == 0)
+            if (!ModelState.IsValid || request is null)
+            {
+
+                return BadRequest(new ResponseResult
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message = ErrorsHandler.Invalid_UploadModel
+                });
+            }
+            if (request.Files == null || request.Files.Count == 0)
             {
                 return BadRequest(new ResponseResult
                 {
@@ -42,7 +52,7 @@ public class ImagesController : BaseAPIController
                 });
             }
 
-            var results = await _imageService.ProcessAndStoreImageAsync(files);
+            var results = await _imageService.ProcessAndStoreImageAsync(request.Files);
             return Ok(results);
         }
         catch (Exception ex)

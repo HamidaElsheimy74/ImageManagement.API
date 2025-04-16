@@ -17,5 +17,6 @@ public static class ErrorsHandler
     public static string Invalid_Username = "Invalid username";
     public static string Invalid_Password = "Invalid password";
     public static string Invalid_LoginModel = "Invalid login model";
+    public static string Invalid_UploadModel = "Invalid upload model";
 
 }
